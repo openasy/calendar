@@ -1,0 +1,30 @@
+# The team calendars, rooms and equipment of this Calendar. Calendar keeps the mail server in step with this file: it
+# is read again within a minute of a save, applied whole or not at all, and a mistake leaves the last good version in
+# place (see the README). People's own calendars need nothing here: every mailbox in Mail's domains file has one.
+#
+# A team or room taken out of the file is not deleted: a room stops taking invitations, a team loses its members.
+teams:
+  # A calendar and an address book that every member sees and edits, on their phones too.
+  - address: sales-team@example.com
+    name: Sales team
+    members: [jane@example.com, ali@example.com]
+rooms:
+  # Booked by inviting the address; a room accepts when it is free and declines when it is not. Give rooms a domain
+  # of their own, such as rooms.example.com, that is not in Mail's domains file.
+  - address: lisbon@rooms.example.com
+    name: Lisbon
+    seats: 6
+    location: 3rd floor
+    features: [Screen, Video bar]
+  - address: atlas@rooms.example.com
+    name: Atlas
+    seats: 14
+    location: 3rd floor
+    # Only they may book it; everyone when left out.
+    bookers: [jane@example.com]
+  - address: projector@rooms.example.com
+    name: Projector
+    kind: equipment
+    location: Reception
+    # How many days ahead it takes bookings; 180 when left out.
+    bookAhead: 30

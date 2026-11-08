@@ -1,0 +1,544 @@
+/* The few layouts this product needs that @openasy/ui's prebuilt styles do not include. Colours stay in the library's tokens. */
+
+.cal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cal-wrap {
+  overflow-wrap: anywhere;
+}
+
+.cal-gap-below {
+  margin-bottom: 0.625rem;
+}
+
+/* Calendars, the view and the open event side by side on wide screens; one under the other on narrow ones. */
+.cal-layout {
+  display: grid;
+  gap: 0.625rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+.cal-layout > * {
+  min-width: 0;
+}
+@media (width >= 80rem) {
+  .cal-layout {
+    grid-template-columns: 13rem minmax(0, 1fr) 18rem;
+  }
+}
+
+/* A main column with a narrow one beside it on wide screens. */
+.cal-side {
+  display: grid;
+  gap: 0.625rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+.cal-side > * {
+  min-width: 0;
+}
+@media (width >= 64rem) {
+  .cal-side {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+  }
+  .cal-side-wide {
+    grid-template-columns: minmax(0, 1fr) 24rem;
+  }
+}
+
+.cal-halves {
+  display: grid;
+  gap: 0.625rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (width >= 64rem) {
+  .cal-halves {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+/* -------------------------------------------------------- the time grid */
+
+.cal-scroll {
+  overflow-x: auto;
+}
+.cal-days {
+  display: grid;
+  grid-template-columns: 3rem repeat(var(--cal-cols, 7), minmax(5.5rem, 1fr));
+}
+.cal-days-one {
+  grid-template-columns: 3rem minmax(0, 1fr);
+}
+.cal-dayhead {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  border-left: 1px solid var(--oa-subtle);
+  padding: 0.375rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--oa-fg-muted);
+  background: none;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cal-dayhead:hover {
+  background: var(--oa-subtle);
+}
+.cal-dayhead strong {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--oa-fg);
+  font-variant-numeric: tabular-nums;
+}
+.cal-today,
+.cal-today strong {
+  color: var(--oa-accent-text);
+}
+.cal-allday {
+  position: relative;
+  display: grid;
+  grid-auto-rows: minmax(1.25rem, auto);
+  row-gap: 2px;
+  border-top: 1px solid var(--oa-line);
+  border-bottom: 1px solid var(--oa-line);
+  padding: 0.25rem 0;
+}
+.cal-allday-label {
+  align-self: center;
+  padding-right: 0.375rem;
+  text-align: right;
+  font-size: 0.6875rem;
+  color: var(--oa-fg-subtle);
+}
+.cal-hours {
+  position: relative;
+}
+.cal-hour {
+  position: absolute;
+  right: 0.375rem;
+  transform: translateY(-50%);
+  font-size: 0.6875rem;
+  color: var(--oa-fg-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.cal-column {
+  position: relative;
+  border-left: 1px solid var(--oa-subtle);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--cal-hour) - 1px),
+    var(--oa-subtle) calc(var(--cal-hour) - 1px),
+    var(--oa-subtle) var(--cal-hour)
+  );
+  cursor: cell;
+}
+.cal-slot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: cell;
+}
+.cal-column-today {
+  background-color: color-mix(in oklab, var(--oa-accent-soft) 35%, transparent);
+}
+.cal-event {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 0;
+  border-left: 3px solid var(--cal-hue);
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  text-align: left;
+  font: inherit;
+  font-size: 0.6875rem;
+  line-height: 1.25;
+  color: var(--oa-fg);
+  background-color: color-mix(in oklab, var(--cal-hue) 16%, var(--oa-surface));
+  cursor: pointer;
+}
+.cal-event:hover {
+  background-color: color-mix(in oklab, var(--cal-hue) 24%, var(--oa-surface));
+}
+.cal-event-short {
+  justify-content: center;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.cal-event-pending {
+  border: 1px dashed var(--cal-hue);
+  border-left: 3px solid var(--cal-hue);
+  background-color: color-mix(in oklab, var(--cal-hue) 5%, var(--oa-surface));
+}
+.cal-event-maybe {
+  opacity: 0.8;
+}
+.cal-event-active {
+  outline: 2px solid var(--oa-accent);
+  outline-offset: 1px;
+  z-index: 5;
+}
+.cal-chip {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  margin: 0 0.125rem;
+  border: 0;
+  border-left: 3px solid var(--cal-hue);
+  border-radius: 0.25rem;
+  padding: 0.0625rem 0.375rem;
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-align: left;
+  color: var(--oa-fg);
+  background-color: color-mix(in oklab, var(--cal-hue) 16%, var(--oa-surface));
+  cursor: pointer;
+}
+.cal-busy {
+  position: absolute;
+  right: 2px;
+  width: 0.5rem;
+  border-radius: 2px;
+  background-image: repeating-linear-gradient(135deg, var(--cal-hue) 0 2px, transparent 2px 5px);
+  pointer-events: none;
+}
+.cal-now {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  height: 2px;
+  background: var(--oa-danger);
+  pointer-events: none;
+}
+.cal-now::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: var(--oa-danger);
+}
+.cal-swatch {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+  background: var(--cal-hue);
+}
+.cal-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--cal-hue);
+}
+
+/* ------------------------------------------------------------ the month */
+
+.cal-month {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.cal-month-head {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--oa-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--oa-line);
+}
+.cal-month-day {
+  display: flex;
+  min-height: 6.5rem;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 1px solid var(--oa-subtle);
+  border-bottom: 1px solid var(--oa-subtle);
+  padding: 0.25rem 0 0.375rem;
+  min-width: 0;
+}
+.cal-month-day:nth-child(7n + 1) {
+  border-left: 0;
+}
+.cal-month-other {
+  background: var(--oa-canvas);
+}
+.cal-month-num {
+  align-self: flex-start;
+  margin: 0 0.375rem;
+  border: 0;
+  border-radius: 9999px;
+  padding: 0 0.375rem;
+  background: none;
+  font: inherit;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--oa-fg);
+  cursor: pointer;
+}
+.cal-month-other .cal-month-num {
+  color: var(--oa-fg-subtle);
+}
+.cal-month-num-today {
+  background: var(--oa-accent);
+  color: var(--oa-accent-contrast, #fff);
+  font-weight: 600;
+}
+.cal-more {
+  margin: 0 0.375rem;
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.6875rem;
+  text-align: left;
+  color: var(--oa-fg-muted);
+  cursor: pointer;
+}
+
+/* -------------------------------------------------------- the mini month */
+
+.cal-mini {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  row-gap: 2px;
+  text-align: center;
+}
+.cal-mini-head {
+  font-size: 0.625rem;
+  color: var(--oa-fg-subtle);
+}
+.cal-mini-day {
+  justify-self: center;
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  place-items: center;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  font: inherit;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--oa-fg);
+  cursor: pointer;
+}
+.cal-mini-day:hover {
+  background: var(--oa-subtle);
+}
+.cal-mini-other {
+  color: var(--oa-fg-subtle);
+}
+.cal-mini-shown {
+  background: var(--oa-accent-soft);
+  color: var(--oa-accent-text);
+}
+.cal-mini-today {
+  background: var(--oa-accent);
+  color: var(--oa-accent-contrast, #fff);
+  font-weight: 600;
+}
+
+/* ----------------------------------------------------------- the agenda */
+
+.cal-agenda-day {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--oa-subtle);
+  padding: 0.625rem 0.75rem;
+}
+.cal-agenda-row {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 7.5rem 0.75rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.375rem;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--oa-fg);
+  cursor: pointer;
+}
+.cal-agenda-row:hover {
+  background: var(--oa-subtle);
+}
+
+/* ------------------------------------------------------------ the rooms */
+
+.cal-rooms {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  min-width: 40rem;
+}
+.cal-room-name {
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cal-room-row {
+  border-bottom: 1px solid var(--oa-subtle);
+}
+.cal-room-active {
+  background: var(--oa-canvas);
+}
+.cal-track {
+  position: relative;
+  margin: 0.375rem 0.75rem 0.375rem 0;
+  min-height: 2.25rem;
+  background-image: repeating-linear-gradient(to right, var(--oa-subtle) 0 1px, transparent 1px calc(100% / var(--cal-span, 10)));
+}
+.cal-booking {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  border-left: 3px solid var(--cal-hue);
+  border-radius: 0.25rem;
+  padding: 0 0.375rem;
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  color: var(--oa-fg);
+  background-color: color-mix(in oklab, var(--cal-hue) 16%, var(--oa-surface));
+}
+.cal-track-now {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  width: 2px;
+  background: var(--oa-danger);
+}
+.cal-scale {
+  position: relative;
+  height: 1.75rem;
+}
+.cal-scale span {
+  position: absolute;
+  top: 0.375rem;
+  transform: translateX(-50%);
+  font-size: 0.6875rem;
+  color: var(--oa-fg-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.cal-scale span:first-child {
+  transform: none;
+}
+.cal-scale span:last-child {
+  transform: translateX(-100%);
+}
+
+/* Find a time: one row per guest, their busy times on the day. */
+.cal-find {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+.cal-find-track {
+  position: relative;
+  height: 1.25rem;
+  border-radius: 0.25rem;
+  background-color: var(--oa-canvas);
+  background-image: repeating-linear-gradient(to right, var(--oa-subtle) 0 1px, transparent 1px calc(100% / var(--cal-span, 10)));
+}
+.cal-find-busy {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--oa-danger) 45%, var(--oa-surface));
+}
+.cal-find-pick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border: 2px solid var(--oa-accent);
+  border-radius: 0.25rem;
+  pointer-events: none;
+}
+
+/* Settings shown from the file: a label column and its value. */
+.cal-settings {
+  display: grid;
+  grid-template-columns: minmax(8rem, 40%) minmax(0, 1fr);
+  gap: 0.5rem 0.75rem;
+}
+
+.cal-textarea {
+  width: 100%;
+  min-height: 5rem;
+  resize: vertical;
+  border: 1px solid var(--oa-line-strong);
+  border-radius: 0.375rem;
+  background: var(--oa-surface);
+  color: var(--oa-fg);
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  font-size: 0.875rem;
+}
+.cal-textarea:focus {
+  outline: 2px solid var(--oa-ring);
+  outline-offset: 1px;
+  border-color: var(--oa-accent);
+}
+
+.cal-chip-remove {
+  margin-left: 0.25rem;
+  display: inline-flex;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.cal-code {
+  margin: 0;
+  overflow-x: auto;
+  border-radius: 0.375rem;
+  background: var(--oa-canvas);
+  padding: 0.5rem 0.625rem;
+  font-family: var(--oa-font-mono, ui-monospace, monospace);
+  font-size: 0.6875rem;
+  line-height: 1.6;
+  color: var(--oa-fg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cal-steps {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}

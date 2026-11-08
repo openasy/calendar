@@ -1,0 +1,96 @@
+# Calendar: the calendar and contacts pages (this repository) next to Mail and Stalwart, the mail server that stores
+# the calendars and contacts and serves them to calendar apps over CalDAV and CardDAV. Calendar needs Mail: it uses
+# Mail's Stalwart and its mailboxes. See the README for the first start.
+#
+#   openssl rand -hex 32 > openasy-kek          # the sign-in secrets key (ADR 0021); keep it with your backups
+#   printf '%s' "$(openssl rand -hex 24)" > stalwart-password            # the service account Mail signs in with
+#   printf '%s' "$(openssl rand -hex 24)" > calendar-stalwart-password   # the service account Calendar signs in with
+#   printf 'STALWART_RECOVERY_ADMIN=admin:%s\n' "$(openssl rand -hex 16)" > stalwart.env   # Stalwart's own admin
+#   docker compose up -d
+#   (Mail's first start, as in Mail's README, then:)
+#   docker compose exec -e "$(cat stalwart.env)" calendar node server/stalwart-setup.ts
+#   docker compose logs calendar | grep 'no owner yet'   # the one-time link that creates the owner account
+services:
+  stalwart:
+    # Pin the exact version you run; Calendar is tested against Stalwart 0.16, as Mail is.
+    image: stalwartlabs/stalwart:v0.16
+    restart: unless-stopped
+    ports:
+      - "25:25" # mail from other servers, and answers to invitations
+      - "465:465" # SMTP for mail apps, TLS
+      - "587:587" # SMTP for mail apps, STARTTLS
+      - "993:993" # IMAP for mail apps, TLS
+      - "443:443" # CalDAV and CardDAV for calendar apps, and Stalwart's own admin
+    volumes:
+      - stalwart-data:/opt/stalwart # every mailbox, calendar and address book: keep it in your backups
+    # STALWART_RECOVERY_ADMIN=admin:<password>: Stalwart's administrator, for its first start and when all else fails.
+    env_file: [stalwart.env]
+
+  mail:
+    image: ghcr.io/openasy/mail:0.1.0
+    restart: unless-stopped
+    depends_on: [stalwart]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    ports:
+      - "127.0.0.1:8080:8080" # webmail and administration; put a TLS proxy in front
+    volumes:
+      - mail-data:/data
+      - ./config:/config:ro # mail.yaml: the domains and mailboxes, which are also who has a calendar
+    secrets:
+      - openasy-kek
+      - stalwart-password
+    environment:
+      MAIL_PUBLIC_URL: ${MAIL_PUBLIC_URL:-http://localhost:8080}
+      MAIL_HOSTNAME: ${MAIL_HOSTNAME:-mail.example.com}
+      MAIL_CONFIG: /config/mail.yaml
+      MAIL_STALWART_URL: http://stalwart:8080
+      MAIL_STALWART_USER: openasy
+
+  calendar:
+    image: ghcr.io/openasy/calendar:0.1.0
+    restart: unless-stopped
+    depends_on: [stalwart]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    ports:
+      - "127.0.0.1:8081:8080" # calendar, contacts, rooms and API; put a TLS proxy in front
+    volumes:
+      - calendar-data:/data # SQLite database: sign-in, syncs, rooms' answers and subscription links; no calendar data
+      - ./config:/config:ro # calendar.yaml, the teams and rooms; mount the folder so an editor's save reaches it
+    secrets:
+      - openasy-kek # mounted at /run/secrets/openasy-kek
+      - calendar-stalwart-password # mounted at /run/secrets/calendar-stalwart-password
+    environment:
+      # The address people open Calendar at; with a TLS proxy, its https:// URL.
+      CALENDAR_PUBLIC_URL: ${CALENDAR_PUBLIC_URL:-http://localhost:8081}
+      # Where calendar apps reach Stalwart's CalDAV and CardDAV: the mail server's name, over https.
+      CALENDAR_DAV_URL: ${CALENDAR_DAV_URL:-https://mail.example.com}
+      CALENDAR_CONFIG: /config/calendar.yaml
+      CALENDAR_STALWART_URL: http://stalwart:8080
+      CALENDAR_STALWART_USER: openasy-calendar
+      # The company directory from OpenAsy Identity, with an API token that has the viewer role:
+      # CALENDAR_IDENTITY_URL: https://login.example.com
+      # CALENDAR_IDENTITY_TOKEN_FILE: /run/secrets/identity-token
+      # Sign in with your identity provider (OIDC), see the README. Everyone with a mailbox signs in as a user:
+      # OPENASY_OIDC_ISSUER: https://login.example.com
+      # OPENASY_OIDC_CLIENT_ID: calendar
+      # OPENASY_OIDC_CLIENT_SECRET: ${OPENASY_OIDC_CLIENT_SECRET}
+      # OPENASY_OIDC_DEFAULT_ROLE: user
+
+volumes:
+  stalwart-data:
+  mail-data:
+  calendar-data:
+
+secrets:
+  openasy-kek:
+    file: ./openasy-kek
+  stalwart-password:
+    file: ./stalwart-password
+  calendar-stalwart-password:
+    file: ./calendar-stalwart-password

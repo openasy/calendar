@@ -1,0 +1,2445 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenAsy Calendar API",
+    "version": "0.1.0",
+    "summary": "Calendars and contacts on the company's own mail server: invitations, free and busy, rooms and sharing, on Stalwart.",
+    "description": "Every screen of Calendar uses this API, and so can your scripts (ADR 0014). Within `/api/v1` changes are additive only; anything removed is deprecated first (ADR 0024). Errors use Problem Details (RFC 9457).\n\nTeams and rooms are set in calendar.yaml, never through the API; Calendar keeps the mail server in step with it. A person's own calendars, contacts and device passwords take the session of that person, never an API token. Everything else takes a session or an API token, and each operation names the role it needs (`x-openasy-role`: user, viewer, editor, admin; ADR 0003).\n\nSign-in, members and API tokens are under `/api/v1/auth`, provided by [@openasy/auth](https://github.com/openasy/auth#routes).",
+    "license": {
+      "name": "AGPL-3.0-only",
+      "identifier": "AGPL-3.0-only"
+    }
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "This Calendar"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Calendars",
+      "description": "A person's own calendars, as the mail server keeps them."
+    },
+    {
+      "name": "Contacts",
+      "description": "A person's address books."
+    },
+    {
+      "name": "Rooms",
+      "description": "Rooms and equipment, and their bookings."
+    },
+    {
+      "name": "Devices",
+      "description": "Passwords for a person's own calendar apps."
+    },
+    {
+      "name": "Leavers",
+      "description": "Meetings of people who left."
+    },
+    {
+      "name": "Server",
+      "description": "The file, and keeping the mail server in step with it."
+    },
+    {
+      "name": "Product",
+      "description": "Version, health and metrics."
+    }
+  ],
+  "paths": {
+    "/api/v1/summary": {
+      "get": {
+        "operationId": "summary",
+        "tags": [
+          "Server"
+        ],
+        "summary": "Teams, rooms, the file and the last sync",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "The summary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Summary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "x-openasy-role": "viewer"
+      }
+    },
+    "/api/v1/config": {
+      "get": {
+        "operationId": "config",
+        "tags": [
+          "Server"
+        ],
+        "summary": "The teams and rooms of the file",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "description": "As calendar.yaml sets them; there is no operation that changes them.",
+        "responses": {
+          "200": {
+            "description": "The file as applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Config"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "x-openasy-role": "viewer"
+      }
+    },
+    "/api/v1/sync": {
+      "get": {
+        "operationId": "syncHistory",
+        "tags": [
+          "Server"
+        ],
+        "summary": "The syncs with the mail server",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "description": "The last 20 times the mail server was brought in step with the file.",
+        "responses": {
+          "200": {
+            "description": "The history.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncHistory"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "x-openasy-role": "viewer"
+      },
+      "post": {
+        "operationId": "syncNow",
+        "tags": [
+          "Server"
+        ],
+        "summary": "Sync now",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "description": "Brings the mail server in step with the file now; it also happens after every change and every five minutes.",
+        "responses": {
+          "200": {
+            "description": "What changed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "x-openasy-role": "admin"
+      }
+    },
+    "/api/v1/session": {
+      "get": {
+        "operationId": "session",
+        "tags": [
+          "Calendars"
+        ],
+        "summary": "Your calendar session",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "Needs a signed-in person with a mailbox on the mail server, any role; API tokens are refused. Your own account, your teams' and what colleagues shared with you, and the addresses calendar apps connect to.",
+        "responses": {
+          "200": {
+            "description": "The session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/jmap": {
+      "post": {
+        "operationId": "jmap",
+        "tags": [
+          "Calendars"
+        ],
+        "summary": "JMAP for Calendars and Contacts, as you",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "Needs a signed-in person with a mailbox on the mail server, any role; API tokens are refused. Only calendar and contacts methods are passed on, as the signed-in person; mail and the mail server's management are refused.",
+        "responses": {
+          "200": {
+            "description": "The mail server's answer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JmapResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "413": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JmapRequest"
+              }
+            }
+          }
+        },
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/upload": {
+      "post": {
+        "operationId": "upload",
+        "tags": [
+          "Calendars"
+        ],
+        "summary": "Upload a file to import",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "Needs a signed-in person with a mailbox on the mail server, any role; API tokens are refused. An .ics or .vcf file, for CalendarEvent/parse or ContactCard/parse.",
+        "responses": {
+          "200": {
+            "description": "The blob on the mail server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Upload"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "413": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "*/*": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/directory": {
+      "get": {
+        "operationId": "directory",
+        "tags": [
+          "Calendars"
+        ],
+        "summary": "The company directory, rooms and teams",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "Needs a signed-in person with a mailbox on the mail server, any role; API tokens are refused.",
+        "responses": {
+          "200": {
+            "description": "Everyone with a mailbox, from Identity when it is set up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Directory"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/availability": {
+      "post": {
+        "operationId": "availability",
+        "tags": [
+          "Calendars"
+        ],
+        "summary": "Free and busy times",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "Needs a signed-in person with a mailbox on the mail server, any role; API tokens are refused. When each person or room is busy, never what they do.",
+        "responses": {
+          "200": {
+            "description": "Busy times by address.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Availability"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "people",
+                  "from",
+                  "to"
+                ],
+                "properties": {
+                  "people": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "maxItems": 30
+                  },
+                  "from": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "to": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/rooms": {
+      "get": {
+        "operationId": "rooms",
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Every room's bookings",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "Needs a signed-in person with a mailbox on the mail server, any role; API tokens are refused. Accepted bookings between two times; private events show only as busy.",
+        "responses": {
+          "200": {
+            "description": "The rooms and their bookings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomDay"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/export/calendars/{account}/{id}": {
+      "get": {
+        "operationId": "exportCalendar",
+        "tags": [
+          "Calendars"
+        ],
+        "summary": "Export a calendar",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "Needs a signed-in person with a mailbox on the mail server, any role; API tokens are refused.",
+        "responses": {
+          "200": {
+            "description": "Every event of the calendar as one iCalendar file.",
+            "content": {
+              "text/calendar": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "parameters": [
+          {
+            "name": "account",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/export/addressbooks/{account}/{id}": {
+      "get": {
+        "operationId": "exportAddressBook",
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Export an address book",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "Needs a signed-in person with a mailbox on the mail server, any role; API tokens are refused.",
+        "responses": {
+          "200": {
+            "description": "Every card as one vCard file.",
+            "content": {
+              "text/vcard": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "parameters": [
+          {
+            "name": "account",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/subscriptions": {
+      "get": {
+        "operationId": "listSubscriptions",
+        "tags": [
+          "Calendars"
+        ],
+        "summary": "Your subscription links",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "Needs a signed-in person with a mailbox on the mail server, any role; API tokens are refused.",
+        "responses": {
+          "200": {
+            "description": "The links; their addresses are not shown again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "x-openasy-role": "user"
+      },
+      "post": {
+        "operationId": "addSubscription",
+        "tags": [
+          "Calendars"
+        ],
+        "summary": "Publish a calendar at a secret link",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "Needs a signed-in person with a mailbox on the mail server, any role; API tokens are refused.",
+        "responses": {
+          "201": {
+            "description": "The link, with its address shown only now.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscription"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "accountId",
+                  "calendarId",
+                  "busy"
+                ],
+                "properties": {
+                  "accountId": {
+                    "type": "string"
+                  },
+                  "calendarId": {
+                    "type": "string"
+                  },
+                  "busy": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/subscriptions/{id}": {
+      "delete": {
+        "operationId": "removeSubscription",
+        "tags": [
+          "Calendars"
+        ],
+        "summary": "Remove a subscription link",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "Needs a signed-in person with a mailbox on the mail server, any role; API tokens are refused.",
+        "responses": {
+          "204": {
+            "description": "Removed; the address stops working."
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-openasy-role": "user"
+      }
+    },
+    "/ics/{token}.ics": {
+      "get": {
+        "operationId": "published",
+        "tags": [
+          "Calendars"
+        ],
+        "summary": "A published calendar",
+        "security": [],
+        "description": "The link is the key: no sign-in. Only what its owner chose, all details or free and busy only.",
+        "responses": {
+          "200": {
+            "description": "The calendar as iCalendar.",
+            "content": {
+              "text/calendar": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/leavers": {
+      "get": {
+        "operationId": "leavers",
+        "tags": [
+          "Leavers"
+        ],
+        "summary": "People who left, and their meetings",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "description": "Accounts Mail disabled, with the meetings they still organize.",
+        "responses": {
+          "200": {
+            "description": "The leavers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaverList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "x-openasy-role": "admin"
+      }
+    },
+    "/api/v1/leavers/{address}/handover": {
+      "post": {
+        "operationId": "handOver",
+        "tags": [
+          "Leavers"
+        ],
+        "summary": "Hand meetings over",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "description": "Each meeting is made again in the new organiser's calendar, the guests get an invitation, and the old one is cancelled.",
+        "responses": {
+          "200": {
+            "description": "How many were handed over.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Done"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "parameters": [
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "to",
+                  "ids"
+                ],
+                "properties": {
+                  "to": {
+                    "type": "string"
+                  },
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-openasy-role": "admin"
+      }
+    },
+    "/api/v1/leavers/{address}/cancel": {
+      "post": {
+        "operationId": "cancelMeetings",
+        "tags": [
+          "Leavers"
+        ],
+        "summary": "Cancel meetings",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "description": "The guests are told.",
+        "responses": {
+          "200": {
+            "description": "How many were cancelled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Done"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "parameters": [
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ids"
+                ],
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-openasy-role": "admin"
+      }
+    },
+    "/api/v1/devices": {
+      "get": {
+        "operationId": "listDevices",
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Your device passwords",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "Needs a signed-in person with a mailbox on the mail server, any role; API tokens are refused.",
+        "responses": {
+          "200": {
+            "description": "Passwords made for your calendar and mail apps; their secrets are not shown again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "x-openasy-role": "user"
+      },
+      "post": {
+        "operationId": "addDevice",
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Make a device password",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "A password for one calendar app over CalDAV and CardDAV; it works for mail too. Needs a signed-in person with a mailbox on the mail server, any role; API tokens are refused.",
+        "responses": {
+          "201": {
+            "description": "The password, shown only now.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewDevice"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/devices/{id}": {
+      "delete": {
+        "operationId": "removeDevice",
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Remove a device password",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "description": "Needs a signed-in person with a mailbox on the mail server, any role; API tokens are refused.",
+        "responses": {
+          "204": {
+            "description": "Removed; the device can no longer sign in."
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "502": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/version": {
+      "get": {
+        "operationId": "getVersion",
+        "tags": [
+          "Product"
+        ],
+        "summary": "Version",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "The running version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Version"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/products": {
+      "get": {
+        "operationId": "listProducts",
+        "tags": [
+          "Product"
+        ],
+        "summary": "Other products of this install",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "description": "Needs the user role.",
+        "responses": {
+          "200": {
+            "description": "From OPENASY_PRODUCTS, for the product switcher.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "x-openasy-role": "user"
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "liveness",
+        "tags": [
+          "Product"
+        ],
+        "summary": "Liveness",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "The process is running.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "operationId": "readiness",
+        "tags": [
+          "Product"
+        ],
+        "summary": "Readiness",
+        "description": "Ready while the database answers.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Ready to serve.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The database is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "operationId": "metrics",
+        "tags": [
+          "Product"
+        ],
+        "summary": "Prometheus metrics",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Metrics in the Prometheus text format.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Problem": {
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "invalid-token",
+              "invalid-json",
+              "invalid-body",
+              "not-found",
+              "no-mailbox",
+              "method-not-allowed",
+              "mail-server-unavailable",
+              "payload-too-large",
+              "internal-error",
+              "unauthenticated",
+              "invalid-credentials",
+              "mfa-required",
+              "mfa-setup-required",
+              "forbidden",
+              "cross-site"
+            ],
+            "description": "Stable; match on this."
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      },
+      "ProductLink": {
+        "type": "object",
+        "required": [
+          "id",
+          "url"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The product, as OpenAsy names it.",
+            "examples": [
+              "infrastructure"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The address people open it at.",
+            "examples": [
+              "https://infra.example.com"
+            ]
+          }
+        }
+      },
+      "ProductList": {
+        "type": "object",
+        "required": [
+          "products"
+        ],
+        "properties": {
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductLink"
+            }
+          }
+        }
+      },
+      "Version": {
+        "type": "object",
+        "required": [
+          "product",
+          "version"
+        ],
+        "properties": {
+          "product": {
+            "const": "calendar"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "Status": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "ConfigFile": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "required": [
+          "path",
+          "appliedAt",
+          "teams",
+          "rooms",
+          "error",
+          "text"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "appliedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teams": {
+            "type": "integer"
+          },
+          "rooms": {
+            "type": "integer"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Team": {
+        "type": "object",
+        "required": [
+          "address",
+          "name",
+          "members"
+        ],
+        "properties": {
+          "address": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string"
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "principalId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Room": {
+        "type": "object",
+        "required": [
+          "address",
+          "name",
+          "kind",
+          "seats",
+          "location",
+          "features",
+          "bookers",
+          "bookAhead"
+        ],
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "room",
+              "equipment"
+            ]
+          },
+          "seats": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "bookers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "bookAhead": {
+            "type": "integer",
+            "description": "Days ahead the room takes bookings."
+          },
+          "principalId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Config": {
+        "type": "object",
+        "required": [
+          "teams",
+          "rooms",
+          "file"
+        ],
+        "properties": {
+          "teams": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Team"
+            }
+          },
+          "rooms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Room"
+            }
+          },
+          "file": {
+            "$ref": "#/components/schemas/ConfigFile"
+          }
+        }
+      },
+      "SyncResult": {
+        "type": "object",
+        "required": [
+          "at",
+          "ok",
+          "created",
+          "updated",
+          "disabled",
+          "warnings",
+          "error"
+        ],
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "created": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "updated": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "disabled": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Rooms that stopped taking invitations and teams that lost their members."
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SyncRun": {
+        "type": "object",
+        "required": [
+          "at",
+          "ok",
+          "created",
+          "updated",
+          "disabled",
+          "warnings",
+          "error"
+        ],
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "created": {
+            "type": "integer"
+          },
+          "updated": {
+            "type": "integer"
+          },
+          "disabled": {
+            "type": "integer"
+          },
+          "warnings": {
+            "type": "integer"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SyncHistory": {
+        "type": "object",
+        "required": [
+          "last",
+          "runs"
+        ],
+        "properties": {
+          "last": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SyncResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "runs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SyncRun"
+            }
+          }
+        }
+      },
+      "Summary": {
+        "type": "object",
+        "required": [
+          "teams",
+          "rooms",
+          "file",
+          "sync",
+          "davUrl"
+        ],
+        "properties": {
+          "teams": {
+            "type": "integer"
+          },
+          "rooms": {
+            "type": "integer"
+          },
+          "file": {
+            "$ref": "#/components/schemas/ConfigFile"
+          },
+          "sync": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SyncResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "davUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "SessionAccount": {
+        "type": "object",
+        "required": [
+          "id",
+          "address",
+          "name",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "own",
+              "team",
+              "shared"
+            ]
+          }
+        }
+      },
+      "Session": {
+        "type": "object",
+        "required": [
+          "address",
+          "name",
+          "accountId",
+          "accounts",
+          "dav",
+          "state"
+        ],
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "accountId": {
+            "type": "string"
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionAccount"
+            }
+          },
+          "dav": {
+            "type": "object",
+            "required": [
+              "server",
+              "calendars",
+              "contacts"
+            ],
+            "properties": {
+              "server": {
+                "type": "string"
+              },
+              "calendars": {
+                "type": "string"
+              },
+              "contacts": {
+                "type": "string"
+              }
+            }
+          },
+          "state": {
+            "type": "string"
+          }
+        }
+      },
+      "JmapRequest": {
+        "type": "object",
+        "required": [
+          "using",
+          "methodCalls"
+        ],
+        "description": "A JMAP request (RFC 8620). Only the calendar and contacts methods are passed on.",
+        "properties": {
+          "using": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "methodCalls": {
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "minItems": 3,
+              "maxItems": 3
+            }
+          }
+        }
+      },
+      "JmapResponse": {
+        "type": "object",
+        "required": [
+          "methodResponses"
+        ],
+        "properties": {
+          "methodResponses": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "minItems": 3,
+              "maxItems": 3
+            }
+          },
+          "sessionState": {
+            "type": "string"
+          }
+        }
+      },
+      "Upload": {
+        "type": "object",
+        "required": [
+          "blobId"
+        ],
+        "properties": {
+          "accountId": {
+            "type": "string"
+          },
+          "blobId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer"
+          }
+        }
+      },
+      "Person": {
+        "type": "object",
+        "required": [
+          "address",
+          "name",
+          "principalId",
+          "groups"
+        ],
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "principalId": {
+            "type": "string"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Directory": {
+        "type": "object",
+        "required": [
+          "source",
+          "people",
+          "rooms",
+          "teams"
+        ],
+        "properties": {
+          "source": {
+            "enum": [
+              "identity",
+              "mail-server"
+            ]
+          },
+          "people": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
+          },
+          "rooms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Room"
+            }
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Team"
+            }
+          }
+        }
+      },
+      "Availability": {
+        "type": "object",
+        "required": [
+          "from",
+          "to",
+          "busy"
+        ],
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "busy": {
+            "type": "object",
+            "description": "By address; null when the address is not someone or a room on the mail server.",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "start",
+                      "end",
+                      "status"
+                    ],
+                    "properties": {
+                      "start": {
+                        "type": "string"
+                      },
+                      "end": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "RoomBooking": {
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "title",
+          "organizer",
+          "organizerName",
+          "mine"
+        ],
+        "properties": {
+          "start": {
+            "type": "string"
+          },
+          "end": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Null for a private event."
+          },
+          "organizer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "organizerName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mine": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RoomDay": {
+        "type": "object",
+        "required": [
+          "from",
+          "to",
+          "rooms",
+          "lastWeek",
+          "answers"
+        ],
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "rooms": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Room"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "bookings",
+                    "unavailable"
+                  ],
+                  "properties": {
+                    "bookings": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RoomBooking"
+                      }
+                    },
+                    "unavailable": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "lastWeek": {
+            "type": "object",
+            "required": [
+              "accepted",
+              "declined"
+            ],
+            "properties": {
+              "accepted": {
+                "type": "integer"
+              },
+              "declined": {
+                "type": "integer"
+              }
+            }
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "at",
+                "room",
+                "title",
+                "organizer",
+                "answer",
+                "reason"
+              ],
+              "properties": {
+                "at": {
+                  "type": "string"
+                },
+                "room": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "organizer": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "answer": {
+                  "enum": [
+                    "accepted",
+                    "declined"
+                  ]
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Subscription": {
+        "type": "object",
+        "required": [
+          "id",
+          "accountId",
+          "calendarId",
+          "name",
+          "busy",
+          "createdAt",
+          "usedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountId": {
+            "type": "string"
+          },
+          "calendarId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "busy": {
+            "type": "boolean",
+            "description": "Free and busy only."
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "usedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "description": "Only when it is made: the secret address."
+          }
+        }
+      },
+      "SubscriptionList": {
+        "type": "object",
+        "required": [
+          "subscriptions"
+        ],
+        "properties": {
+          "subscriptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Subscription"
+            }
+          }
+        }
+      },
+      "Leaver": {
+        "type": "object",
+        "required": [
+          "address",
+          "name",
+          "meetings"
+        ],
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "meetings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "title",
+                "start",
+                "timeZone",
+                "repeats",
+                "guests"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "start": {
+                  "type": "string"
+                },
+                "timeZone": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "repeats": {
+                  "type": "boolean"
+                },
+                "guests": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "LeaverList": {
+        "type": "object",
+        "required": [
+          "leavers"
+        ],
+        "properties": {
+          "leavers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Leaver"
+            }
+          }
+        }
+      },
+      "Done": {
+        "type": "object",
+        "required": [
+          "done"
+        ],
+        "properties": {
+          "done": {
+            "type": "integer"
+          }
+        }
+      },
+      "Device": {
+        "type": "object",
+        "required": [
+          "id",
+          "description"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DeviceList": {
+        "type": "object",
+        "required": [
+          "devices"
+        ],
+        "properties": {
+          "devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Device"
+            }
+          }
+        }
+      },
+      "NewDevice": {
+        "type": "object",
+        "required": [
+          "id",
+          "description",
+          "secret",
+          "username"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "string",
+            "description": "The password to enter in the calendar app. It is shown only this once."
+          },
+          "username": {
+            "type": "string",
+            "description": "The user name to enter: the mailbox's address."
+          }
+        }
+      }
+    },
+    "responses": {
+      "Problem": {
+        "description": "An error, as RFC 9457 Problem Details.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__Host-openasy-session",
+        "description": "The browser session after signing in (`openasy-session` when Calendar runs on plain http://localhost). Requests that change something must come from the Calendar origin."
+      },
+      "apiToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "An API token created under Settings → API tokens (`oa_calendar_...`): one role, always an expiry (ADR 0003)."
+      },
+      "adminToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Only when Calendar is started by its tests or a local script: one shared token with the admin role. A production install does not have it."
+      }
+    }
+  }
+}
