@@ -1,3 +1,4 @@
+import { viewerLocale } from "./i18n.ts";
 // Times in the pages. An event keeps its own time zone (JSCalendar: a local start, a time zone and a duration, RFC
 // 8984); the pages show it in the time zone the person picked, which is their browser's unless they change it. The
 // mail server expands repeating events; these helpers only convert and format.
@@ -21,7 +22,7 @@ const formatters = new Map<string, Intl.DateTimeFormat>();
 function formatter(tz: string): Intl.DateTimeFormat {
   let f = formatters.get(tz);
   if (!f) {
-    f = new Intl.DateTimeFormat("en-US", {
+    f = new Intl.DateTimeFormat(viewerLocale(), {
       timeZone: tz,
       hourCycle: "h23",
       year: "numeric",

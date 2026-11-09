@@ -74,15 +74,15 @@
   display: flex;
   align-items: baseline;
   gap: 0.25rem;
-  border-left: 1px solid var(--oa-subtle);
+  border-inline-start: 1px solid var(--oa-subtle);
   padding: 0.375rem 0.5rem;
   font-size: 0.75rem;
   color: var(--oa-fg-muted);
   background: none;
   border-top: 0;
-  border-right: 0;
+  border-inline-end: 0;
   border-bottom: 0;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   font-family: inherit;
 }
@@ -110,8 +110,8 @@
 }
 .cal-allday-label {
   align-self: center;
-  padding-right: 0.375rem;
-  text-align: right;
+  padding-inline-end: 0.375rem;
+  text-align: end;
   font-size: 0.6875rem;
   color: var(--oa-fg-subtle);
 }
@@ -120,7 +120,7 @@
 }
 .cal-hour {
   position: absolute;
-  right: 0.375rem;
+  inset-inline-end: 0.375rem;
   transform: translateY(-50%);
   font-size: 0.6875rem;
   color: var(--oa-fg-subtle);
@@ -128,7 +128,7 @@
 }
 .cal-column {
   position: relative;
-  border-left: 1px solid var(--oa-subtle);
+  border-inline-start: 1px solid var(--oa-subtle);
   background-image: repeating-linear-gradient(
     to bottom,
     transparent 0,
@@ -156,10 +156,10 @@
   flex-direction: column;
   overflow: hidden;
   border: 0;
-  border-left: 3px solid var(--cal-hue);
+  border-inline-start: 3px solid var(--cal-hue);
   border-radius: 0.25rem;
   padding: 0.125rem 0.375rem;
-  text-align: left;
+  text-align: start;
   font: inherit;
   font-size: 0.6875rem;
   line-height: 1.25;
@@ -177,7 +177,7 @@
 }
 .cal-event-pending {
   border: 1px dashed var(--cal-hue);
-  border-left: 3px solid var(--cal-hue);
+  border-inline-start: 3px solid var(--cal-hue);
   background-color: color-mix(in oklab, var(--cal-hue) 5%, var(--oa-surface));
 }
 .cal-event-maybe {
@@ -195,20 +195,20 @@
   text-overflow: ellipsis;
   margin: 0 0.125rem;
   border: 0;
-  border-left: 3px solid var(--cal-hue);
+  border-inline-start: 3px solid var(--cal-hue);
   border-radius: 0.25rem;
   padding: 0.0625rem 0.375rem;
   font: inherit;
   font-size: 0.6875rem;
   font-weight: 500;
-  text-align: left;
+  text-align: start;
   color: var(--oa-fg);
   background-color: color-mix(in oklab, var(--cal-hue) 16%, var(--oa-surface));
   cursor: pointer;
 }
 .cal-busy {
   position: absolute;
-  right: 2px;
+  inset-inline-end: 2px;
   width: 0.5rem;
   border-radius: 2px;
   background-image: repeating-linear-gradient(135deg, var(--cal-hue) 0 2px, transparent 2px 5px);
@@ -216,8 +216,8 @@
 }
 .cal-now {
   position: absolute;
-  left: 0;
-  right: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
   z-index: 6;
   height: 2px;
   background: var(--oa-danger);
@@ -227,7 +227,7 @@
   content: "";
   position: absolute;
   top: -4px;
-  left: -5px;
+  inset-inline-start: -5px;
   width: 10px;
   height: 10px;
   border-radius: 9999px;
@@ -270,13 +270,13 @@
   min-height: 6.5rem;
   flex-direction: column;
   gap: 2px;
-  border-left: 1px solid var(--oa-subtle);
+  border-inline-start: 1px solid var(--oa-subtle);
   border-bottom: 1px solid var(--oa-subtle);
   padding: 0.25rem 0 0.375rem;
   min-width: 0;
 }
 .cal-month-day:nth-child(7n + 1) {
-  border-left: 0;
+  border-inline-start: 0;
 }
 .cal-month-other {
   background: var(--oa-canvas);
@@ -309,7 +309,7 @@
   background: none;
   font: inherit;
   font-size: 0.6875rem;
-  text-align: left;
+  text-align: start;
   color: var(--oa-fg-muted);
   cursor: pointer;
 }
@@ -377,7 +377,7 @@
   padding: 0.25rem 0.375rem;
   background: none;
   font: inherit;
-  text-align: left;
+  text-align: start;
   color: var(--oa-fg);
   cursor: pointer;
 }
@@ -399,7 +399,7 @@
   padding: 0.5rem 0.75rem;
   background: none;
   font: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 .cal-room-row {
@@ -422,7 +422,7 @@
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
-  border-left: 3px solid var(--cal-hue);
+  border-inline-start: 3px solid var(--cal-hue);
   border-radius: 0.25rem;
   padding: 0 0.375rem;
   font-size: 0.6875rem;
@@ -513,7 +513,7 @@
 }
 
 .cal-chip-remove {
-  margin-left: 0.25rem;
+  margin-inline-start: 0.25rem;
   display: inline-flex;
   border: 0;
   padding: 0;
@@ -538,7 +538,7 @@
 
 .cal-steps {
   margin: 0;
-  padding-left: 1.25rem;
+  padding-inline-start: 1.25rem;
   font-size: 0.8125rem;
   line-height: 1.6;
 }

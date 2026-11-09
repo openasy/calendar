@@ -103,7 +103,7 @@ export function RoomsPage({ call, onBook }: { call: Call; onBook: (room: string,
               <div className="cal-scroll">
                 <div className="cal-rooms border-b border-line">
                   <span className="px-3 py-1.5 text-2xs font-semibold tracking-wide text-fg-muted uppercase">{t("rooms.room")}</span>
-                  <span className="cal-scale mr-3">
+                  <span className="cal-scale me-3">
                     {hours.map((h) => (
                       <span key={h} style={{ left: `${((h - FIRST) / (LAST - FIRST)) * 100}%` }}>
                         {String(h).padStart(2, "0")}:00

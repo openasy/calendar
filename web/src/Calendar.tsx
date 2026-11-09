@@ -397,7 +397,7 @@ function TimeGrid({ days, events, hueOf, tz, today, now, active, onOpen, onSlot,
                         className={cls}
                         aria-pressed={active === e.key}
                         onClick={() => onOpen(e)}
-                        style={{ ...hueStyle(hueOf(e)), top, height, left: `calc(${(lane / of) * 100}% + 2px)`, width: `calc(${100 / of}% - 4px)` }}
+                        style={{ ...hueStyle(hueOf(e)), top, height, insetInlineStart: `calc(${(lane / of) * 100}% + 2px)`, width: `calc(${100 / of}% - 4px)` }}
                       >
                         <span className="truncate font-semibold">{eventName(e, t)}</span>
                         {!short && (
@@ -1086,7 +1086,7 @@ export function CalendarPage({
                     <li key={e.key} className="flex flex-col gap-1.5">
                       <button
                         type="button"
-                        className="flex flex-col border-0 bg-transparent p-0 text-left cursor-pointer"
+                        className="flex flex-col border-0 bg-transparent p-0 text-start cursor-pointer"
                         onClick={() => (setAnchor(dateOf(toLocal(e.start, tz))), setOpenKey(e.key))}
                       >
                         <span className="text-sm font-medium text-fg">{eventName(e, t)}</span>
